@@ -160,26 +160,97 @@ def login():
     cart_count = sum(item['qty'] for item in session.get('cart', {}).values()) if session.get('cart') else 0
     return render_template('auth.html', mode='login', cart_count=cart_count)
 
+# ── EMAIL CONFIG ─────────────────────────────
+from flask_mail import Mail, Message
+import random
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'jsalariya2008@gmail.com'
+app.config['MAIL_PASSWORD'] = 'kfsd pysv incz jojq'
+
+mail = Mail(app)
+
+# ── OTP FUNCTIONS ─────────────────────────────
+def generate_otp():
+    return str(random.randint(100000, 999999))
+
+def send_otp(email, otp):
+    msg = Message(
+        'Your OTP Code',
+        sender=app.config['MAIL_USERNAME'],
+        recipients=[email]
+    )
+    msg.body = f'Your OTP is {otp}'
+    mail.send(msg)
+
+
+# ── SIGNUP WITH OTP ─────────────────────────────
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
         name = request.form['name']
         email = request.form['email']
         password = request.form['password']
+
         cur = mysql.connection.cursor()
         cur.execute("SELECT id FROM users WHERE email=%s", (email,))
         if cur.fetchone():
+            cur.close()
             flash('Email already registered', 'error')
             return redirect(url_for('signup'))
-        pw_hash = generate_password_hash(password)
-        cur.execute("INSERT INTO users (name,email,password_hash) VALUES(%s,%s,%s)", (name, email, pw_hash))
-        mysql.connection.commit()
-        cur.close()
-        flash('Account created! Please log in.', 'success')
-        return redirect(url_for('login'))
+
+        # Generate OTP
+        otp = generate_otp()
+
+        # Save temp user
+        session['temp_user'] = {
+            'name': name,
+            'email': email,
+            'password': generate_password_hash(password)
+        }
+        session['otp'] = otp
+
+        # Send OTP
+        send_otp(email, otp)
+
+        flash('OTP sent to your email', 'success')
+        return redirect(url_for('verify_otp_page'))
+
     cart_count = sum(item['qty'] for item in session.get('cart', {}).values()) if session.get('cart') else 0
     return render_template('auth.html', mode='signup', cart_count=cart_count)
 
+
+# ── VERIFY OTP ─────────────────────────────
+@app.route('/verify-otp', methods=['GET', 'POST'])
+def verify_otp_page():
+    if request.method == 'POST':
+        user_otp = request.form['otp']
+
+        if user_otp == session.get('otp'):
+            user = session.get('temp_user')
+
+            cur = mysql.connection.cursor()
+            cur.execute("""
+                INSERT INTO users (name,email,password_hash)
+                VALUES(%s,%s,%s)
+            """, (user['name'], user['email'], user['password']))
+            mysql.connection.commit()
+            cur.close()
+
+            session.pop('otp', None)
+            session.pop('temp_user', None)
+
+            flash('Account created successfully!', 'success')
+            return redirect(url_for('login'))
+        else:
+            flash('Invalid OTP', 'error')
+
+    return render_template('verify_otp.html')
+
+
+#LOGOUT
 @app.route('/logout')
 def logout():
     session.clear()
@@ -279,9 +350,6 @@ def uploaded_file(filename):
         filename
     )
 
-if __name__ == "__main__":
-    app.run(debug=True, port=5000)
-
 import razorpay
 import hmac
 import hashlib
@@ -293,10 +361,10 @@ rz_client = razorpay.Client(
 )
 
 # ── CHECKOUT: create a Razorpay order ─────────────────────────────
-@app.route('/checkout', methods=['POST'])
+
+@app.route('/checkout', methods=['GET','POST'])
 @login_required
 def checkout():
-    # Calculate total from session cart
     cart = session.get('cart', {})
     if not cart:
         return redirect(url_for('cart'))
@@ -311,21 +379,19 @@ def checkout():
             total += p['price'] * item['qty']
 
     shipping = 0 if total >= 999 else 99
-    grand_total = int((total + shipping) * 100)  # Razorpay uses paise
+    grand_total = int((total + shipping) * 100)
 
-    # Create Razorpay order
     rz_order = rz_client.order.create({
         'amount': grand_total,
         'currency': 'INR',
-        'receipt': f"algo_{session['user_id']}_{int(__import__('time').time())}",
-        'notes': {'user_id': session['user_id']}
+        'receipt': f"algo_{session['user_id']}",
     })
 
-    # Save pending order in DB
     cur.execute("""
         INSERT INTO orders (user_id, total_amount, status, razorpay_order_id)
         VALUES (%s, %s, 'pending', %s)
     """, (session['user_id'], total + shipping, rz_order['id']))
+
     mysql.connection.commit()
     order_id = cur.lastrowid
     cur.close()
@@ -335,7 +401,6 @@ def checkout():
         rz_order_id=rz_order['id'],
         amount=grand_total,
         order_id=order_id,
-        user_name=session.get('username', ''),
         cart_count=sum(i['qty'] for i in cart.values())
     )
 
@@ -419,3 +484,6 @@ def order_success(order_id):
     cur.close()
     cart_count = 0
     return render_template('order_success.html', order=order, cart_count=cart_count)
+
+if __name__ == "__main__":
+    app.run(debug=True)
