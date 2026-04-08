@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename, send_from_directory
 import os
 import json
+import mysql.connector
 from functools import wraps
 from datetime import datetime
 
@@ -361,8 +362,7 @@ rz_client = razorpay.Client(
 )
 
 # ── CHECKOUT: create a Razorpay order ─────────────────────────────
-
-@app.route('/checkout', methods=['GET','POST'])
+@app.route('/checkout', methods=['POST'])
 @login_required
 def checkout():
     cart = session.get('cart', {})
@@ -370,28 +370,40 @@ def checkout():
         return redirect(url_for('cart'))
 
     cur = mysql.connection.cursor()
-    total = 0
+    cart_items = []
+    subtotal = 0
+
     for key, item in cart.items():
-        pid = item['product_id']
-        cur.execute("SELECT price FROM products WHERE id=%s", (pid,))
+        pid = item.get('product_id') or key.split('_')[0]
+        cur.execute("SELECT * FROM products WHERE id=%s", (pid,))
         p = cur.fetchone()
         if p:
-            total += p['price'] * item['qty']
+            sub = p['price'] * item['qty']
+            subtotal += sub
+            cart_items.append({
+                **p,
+                'qty': item['qty'],
+                'size': item.get('size', 'M'),
+                'subtotal': sub
+            })
 
-    shipping = 0 if total >= 999 else 99
-    grand_total = int((total + shipping) * 100)
+    shipping = 0 if subtotal >= 999 else 99
+    grand_total = subtotal + shipping
+    amount_paise = int(grand_total * 100)  # Razorpay uses paise
 
+    # Create Razorpay order
+    import time
     rz_order = rz_client.order.create({
-        'amount': grand_total,
+        'amount': amount_paise,
         'currency': 'INR',
-        'receipt': f"algo_{session['user_id']}",
+        'receipt': f"algo_{session['user_id']}_{int(time.time())}",
     })
 
+    # Save pending order in DB
     cur.execute("""
         INSERT INTO orders (user_id, total_amount, status, razorpay_order_id)
         VALUES (%s, %s, 'pending', %s)
-    """, (session['user_id'], total + shipping, rz_order['id']))
-
+    """, (session['user_id'], grand_total, rz_order['id']))
     mysql.connection.commit()
     order_id = cur.lastrowid
     cur.close()
@@ -399,11 +411,37 @@ def checkout():
     return render_template('checkout.html',
         rz_key=os.getenv('RAZORPAY_KEY_ID'),
         rz_order_id=rz_order['id'],
-        amount=grand_total,
+        amount=amount_paise,
         order_id=order_id,
-        cart_count=sum(i['qty'] for i in cart.values())
+        subtotal=subtotal,
+        grand_total=grand_total,
+        cart_items=cart_items,
+        cart_count=0
     )
 
+
+@app.route('/place-order', methods=['POST'])
+@login_required
+def place_order():
+    """Handles COD orders — no payment needed upfront."""
+    order_id       = request.form.get('order_id')
+    payment_method = request.form.get('payment_method', 'cod')
+
+    if payment_method != 'cod':
+        # Online methods are handled by /payment/verify — shouldn't reach here
+        return redirect(url_for('cart'))
+
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        UPDATE orders
+        SET status='confirmed', payment_method='cod'
+        WHERE id=%s AND user_id=%s
+    """, (order_id, session['user_id']))
+    mysql.connection.commit()
+    cur.close()
+
+    session.pop('cart', None)
+    return redirect(url_for('order_success', order_id=order_id))
 
 # ── PAYMENT VERIFICATION: called after user pays ──────────────────
 @app.route('/payment/verify', methods=['POST'])
