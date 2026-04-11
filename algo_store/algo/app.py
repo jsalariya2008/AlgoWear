@@ -7,6 +7,8 @@ import json
 import mysql.connector
 from functools import wraps
 from datetime import datetime
+import pymysql
+pymysql.install_as_MySQLdb()
 
 app = Flask(__name__)
 app.secret_key = 'algo_streetwear_secret_2024'
