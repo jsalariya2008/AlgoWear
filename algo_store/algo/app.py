@@ -168,8 +168,8 @@ import random
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'jsalariya2008@gmail.com'
-app.config['MAIL_PASSWORD'] = 'kfsd pysv incz jojq'
+app.config['MAIL_USERNAME'] = 'algowear.co@gmail.com'
+app.config['MAIL_PASSWORD'] = 'vhxqxfrccoevzmzb'
 
 mail = Mail(app)
 
@@ -335,6 +335,20 @@ def admin_delete_product(pid):
     cur.close()
     return jsonify({'success': True})
 
+@app.route('/admin/orders')
+@admin_required
+def admin_orders():
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT o.id, o.total_amount, o.status, o.created_at, u.name
+        FROM orders o
+        LEFT JOIN users u ON o.user_id = u.id
+        ORDER BY o.created_at DESC
+    """)
+    orders = cur.fetchall()
+    cur.close()
+    return render_template('admin_orders.html', orders=orders)
+
 # ── API for cart count ─────────────────────────────────────────────────────────
 @app.route('/api/cart-count')
 def cart_count_api():
@@ -362,9 +376,10 @@ rz_client = razorpay.Client(
 )
 
 # ── CHECKOUT: create a Razorpay order ─────────────────────────────
-@app.route('/checkout', methods=['POST'])
+@app.route('/checkout', methods=['GET', 'POST'])
 @login_required
 def checkout():
+
     cart = session.get('cart', {})
     if not cart:
         return redirect(url_for('cart'))
@@ -389,7 +404,15 @@ def checkout():
 
     shipping = 0 if subtotal >= 999 else 99
     grand_total = subtotal + shipping
-    amount_paise = int(grand_total * 100)  # Razorpay uses paise
+
+    # 👉 JUST SHOW PAGE (no order creation yet)
+    return render_template(
+        'checkout.html',
+        cart_items=cart_items,
+        subtotal=subtotal,
+        grand_total=grand_total,
+        cart_count=0
+    )
 
     # Create Razorpay order
     import time
@@ -418,17 +441,15 @@ def checkout():
         cart_items=cart_items,
         cart_count=0
     )
-
-
 @app.route('/place-order', methods=['POST'])
 @login_required
 def place_order():
     """Handles COD orders — no payment needed upfront."""
-    order_id       = request.form.get('order_id')
+    
+    order_id = request.form.get('order_id')
     payment_method = request.form.get('payment_method', 'cod')
 
     if payment_method != 'cod':
-        # Online methods are handled by /payment/verify — shouldn't reach here
         return redirect(url_for('cart'))
 
     cur = mysql.connection.cursor()
@@ -437,16 +458,44 @@ def place_order():
         SET status='confirmed', payment_method='cod'
         WHERE id=%s AND user_id=%s
     """, (order_id, session['user_id']))
+    
     mysql.connection.commit()
+
+    # ✅ SEND EMAIL INSIDE FUNCTION
+    try:
+        msg = Message(
+            subject="🛒 New COD Order - ALGO",
+            sender=app.config['MAIL_USERNAME'],
+            recipients=['algowear.co@gmail.com']
+        )
+
+        msg.body = f"""
+New COD Order Received!
+
+Order ID: {order_id}
+Payment: Cash on Delivery
+
+Check admin panel for details.
+"""
+
+        mail.send(msg)
+
+    except Exception as e:
+        print("Email error:", e)
+
+    # ✅ CLEAR CART
+    session.pop('cart', None)
+
     cur.close()
 
-    session.pop('cart', None)
+    # ✅ RETURN MUST BE LAST INSIDE FUNCTION
     return redirect(url_for('order_success', order_id=order_id))
 
 # ── PAYMENT VERIFICATION: called after user pays ──────────────────
 @app.route('/payment/verify', methods=['POST'])
 @login_required
 def verify_payment():
+
     data = request.get_json()
     rz_order_id   = data.get('razorpay_order_id')
     rz_payment_id = data.get('razorpay_payment_id')
@@ -461,7 +510,7 @@ def verify_payment():
     if not hmac.compare_digest(expected, rz_signature):
         return jsonify({'success': False, 'error': 'Invalid signature'}), 400
 
-    # Mark order as confirmed in DB
+    # ✅ Update DB
     cur = mysql.connection.cursor()
     cur.execute("""
         UPDATE orders SET
@@ -471,11 +520,37 @@ def verify_payment():
             paid_at=NOW()
         WHERE id=%s AND user_id=%s
     """, (rz_payment_id, rz_signature, db_order_id, session['user_id']))
+    
     mysql.connection.commit()
+
+    # ✅ SEND EMAIL INSIDE FUNCTION
+    try:
+        msg = Message(
+            subject="💳 New Paid Order - ALGO",
+            sender=app.config['MAIL_USERNAME'],
+            recipients=['algowear.co@gmail.com']
+        )
+
+        msg.body = f"""
+New Paid Order Received!
+
+Order ID: {db_order_id}
+Payment ID: {rz_payment_id}
+
+Check admin panel for details.
+"""
+
+        mail.send(msg)
+
+    except Exception as e:
+        print("Email error:", e)
+
+    # ✅ Clear cart ALWAYS
+    session.pop('cart', None)
+
     cur.close()
 
-    # Clear cart
-    session.pop('cart', None)
+    # ✅ Always return
     return jsonify({'success': True, 'order_id': db_order_id})
 
 

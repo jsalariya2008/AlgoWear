@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Checkout — ALGO{% endblock %}
+{% block title %}Checkout - ALGO{% endblock %}
 
 {% block content %}
 <div style="padding:calc(70px + 50px) clamp(20px,5vw,60px) 80px; max-width:1200px; margin:0 auto;">
@@ -37,7 +37,7 @@
         </p>
 
         <!-- UPI -->
-        <div class="pay-opt selected" id="opt-upi" onclick="selectMethod('upi')">
+        <div class="pay-opt" id="opt-upi" ;>
           <div class="pay-radio"><div class="pay-dot"></div></div>
           <div style="flex:1;">
             <div class="pay-name">UPI</div>
@@ -48,20 +48,20 @@
         <div class="pay-body open" id="body-upi">
           <div style="display:flex;gap:8px;margin-bottom:10px;">
             <input class="co-input" id="upiId" placeholder="yourname@upi" type="text" style="margin:0;flex:1;">
-            <button onclick="verifyUPI()" style="padding:0 16px;background:#1a1714;color:#f0e6d3;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;border:none;cursor:pointer;white-space:nowrap;" id="upiVerifyBtn">
+            <button type="button" onclick="verifyUPI()" style="padding:0 16px;background:#1a1714;color:#f0e6d3;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;border:none;cursor:pointer;white-space:nowrap;" id="upiVerifyBtn">
               Verify
             </button>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button class="app-btn" onclick="pickApp(this,'GPay')">GPay</button>
-            <button class="app-btn" onclick="pickApp(this,'PhonePe')">PhonePe</button>
-            <button class="app-btn" onclick="pickApp(this,'Paytm')">Paytm</button>
-            <button class="app-btn" onclick="pickApp(this,'BHIM')">BHIM</button>
+            <button class="app-btn" type="button" onclick="pickApp(this,'GPay')">GPay</button>
+            <button class="app-btn" type="button" onclick="pickApp(this,'PhonePe')">PhonePe</button>
+            <button class="app-btn" type="button" onclick="pickApp(this,'Paytm')">Paytm</button>
+            <button class="app-btn" type="button" onclick="pickApp(this,'BHIM')">BHIM</button>
           </div>
         </div>
 
         <!-- Card -->
-        <div class="pay-opt" id="opt-card" onclick="selectMethod('card')">
+        <div class="pay-opt" id="opt-card">
           <div class="pay-radio"><div class="pay-dot"></div></div>
           <div style="flex:1;">
             <div class="pay-name">Credit / Debit Card</div>
@@ -78,7 +78,7 @@
         </div>
 
         <!-- Net Banking -->
-        <div class="pay-opt" id="opt-nb" onclick="selectMethod('nb')">
+        <div class="pay-opt" id="opt-nb">
           <div class="pay-radio"><div class="pay-dot"></div></div>
           <div style="flex:1;">
             <div class="pay-name">Net Banking</div>
@@ -99,7 +99,7 @@
         </div>
 
         <!-- COD -->
-        <div class="pay-opt" id="opt-cod" onclick="selectMethod('cod')">
+        <div class="pay-opt" id="opt-cod">
           <div class="pay-radio"><div class="pay-dot"></div></div>
           <div style="flex:1;">
             <div class="pay-name">Cash on Delivery</div>
@@ -111,9 +111,10 @@
             Pay in cash when delivered. Our partner will collect payment at your door.
           </p>
           <span style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;background:#fffbeb;color:#92400e;padding:4px 10px;">
-            + ₹25 COD handling fee
+            + ₹50 COD handling fee
           </span>
         </div>
+      
 
       </div>
     </div>
@@ -161,7 +162,7 @@
 
 <!-- Hidden form for actual submission -->
 <form id="checkoutForm" method="POST" action="{{ url_for('place_order') }}" style="display:none;">
-  <input type="hidden" name="payment_method" id="paymentMethodInput" value="upi">
+  <input type="hidden" name="payment_method" id="paymentMethod">
   <input type="hidden" name="upi_id"         id="upiIdInput">
   <input type="hidden" name="rz_order_id"    value="{{ rz_order_id }}">
   <input type="hidden" name="order_id"       value="{{ order_id }}">
@@ -172,46 +173,73 @@
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <style>
+  .pay-opt {
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:14px;
+  border:1px solid rgba(0,0,0,.1);
+  cursor:pointer;
+  margin-bottom:6px;
+}
+
+.pay-opt.selected {
+  border-color:#c0392b;
+}
+
+.pay-radio {
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  border:1.5px solid #999;
+}
+
+.pay-dot {
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#c0392b;
+  opacity:0;
+}
+
+.pay-opt.selected .pay-dot {
+  opacity:1;
+}
+
+.pay-body {
+  display:none;
+}
+
+.pay-body.open {
+  display:block;
+}
 .co-input {
   width:100%; padding:11px 14px; border:1px solid rgba(0,0,0,.1);
   background:#fdfaf6; font-family:'Crimson Pro',serif; font-size:.95rem;
   margin-bottom:8px; outline:none; box-sizing:border-box;
 }
 .co-input:focus { border-color:#c0392b; }
-.pay-opt {
-  display:flex; align-items:center; gap:14px; padding:14px 16px;
-  border:1px solid rgba(0,0,0,.1); background:#fdfaf6; cursor:pointer;
-  margin-bottom:6px; transition:border-color .2s;
-}
-.pay-opt:hover { border-color:rgba(0,0,0,.25); }
-.pay-opt.selected { border-color:#c0392b; background:#fff8f7; }
-.pay-radio {
-  width:18px; height:18px; border-radius:50%;
-  border:1.5px solid rgba(0,0,0,.2); display:flex;
-  align-items:center; justify-content:center; flex-shrink:0;
-}
-.pay-opt.selected .pay-radio { border-color:#c0392b; }
-.pay-dot { width:9px; height:9px; border-radius:50%; background:#c0392b; opacity:0; transition:opacity .15s; }
-.pay-opt.selected .pay-dot { opacity:1; }
-.pay-name { font-family:'DM Mono',monospace; font-size:.78rem; font-weight:500; color:#1a1714; }
-.pay-desc { font-size:.85rem; color:rgba(0,0,0,.42); margin-top:2px; }
-.pay-badge { font-family:'DM Mono',monospace; font-size:.58rem; letter-spacing:.1em; text-transform:uppercase; padding:3px 8px; background:#f0fdf4; color:#166534; }
-.pay-body { overflow:hidden; max-height:0; transition:max-height .35s ease, padding .3s; padding:0 16px; border:1px solid rgba(0,0,0,.07); border-top:none; background:#fff; margin-bottom:6px; margin-top:-6px; }
-.pay-body.open { max-height:200px; padding:16px; }
 .app-btn { padding:6px 12px; border:1px solid rgba(0,0,0,.1); font-family:'DM Mono',monospace; font-size:.62rem; letter-spacing:.08em; cursor:pointer; background:#fdfaf6; transition:all .2s; }
 .app-btn:hover, .app-btn.active { background:#1a1714; color:#f0e6d3; border-color:#1a1714; }
 </style>
 
 <script>
+document.addEventListener("DOMContentLoaded", function () {
+
 const RZ_KEY   = '{{ rz_key }}';
 const RZ_ORDER = '{{ rz_order_id }}';
 const AMOUNT   = {{ amount }};
 const ORDER_ID = {{ order_id }};
-const BASE     = {{ subtotal + (0 if subtotal >= 999 else 99) }};
 
 let currentMethod = 'upi';
-const methods = ['upi','card','nb','cod'];
-const btnLabels = { upi:'UPI', card:'Card', nb:'Net Banking', cod:'Cash on Delivery' };
+
+const btnLabels = {
+  upi: 'UPI',
+  card: 'Card',
+  nb: 'Net Banking',
+  cod: 'Cash on Delivery'
+};
+
 const btnNotes  = {
   upi:  'UPI payment processed via Razorpay',
   card: 'Card charged securely via Razorpay',
@@ -219,99 +247,91 @@ const btnNotes  = {
   cod:  'Pay cash when your order arrives'
 };
 
+// ✅ SELECT METHOD
 function selectMethod(m) {
   currentMethod = m;
-  methods.forEach(id => {
-    document.getElementById('opt-'+id).classList.toggle('selected', id===m);
-    document.getElementById('body-'+id).classList.toggle('open', id===m);
+
+  document.querySelectorAll('.pay-opt').forEach(el => {
+    el.classList.remove('selected');
   });
-  document.getElementById('placeOrderBtn').textContent = 'Place Order — ' + btnLabels[m];
-  document.getElementById('methodNote').textContent    = btnNotes[m];
-  document.getElementById('paymentMethodInput').value  = m;
-  // COD fee toggle
-  const codRow = document.getElementById('codFeeRow');
-  codRow.style.display = m==='cod' ? 'flex' : 'none';
-  document.getElementById('totalDisplay').textContent =
-    '₹' + (m==='cod' ? BASE+25 : BASE).toLocaleString('en-IN');
+
+  document.querySelectorAll('.pay-body').forEach(el => {
+    el.classList.remove('open');
+  });
+
+  const opt = document.getElementById('opt-' + m);
+  const body = document.getElementById('body-' + m);
+
+  if (opt) opt.classList.add('selected');
+  if (body) body.classList.add('open');
+
+  const hidden = document.getElementById('paymentMethod');
+  if (hidden) hidden.value = m;
+
+  const btn = document.getElementById('placeOrderBtn');
+  if (btn) btn.textContent = 'Place Order — ' + btnLabels[m];
+
+  const note = document.getElementById('methodNote');
+  if (note) note.textContent = btnNotes[m];
 }
 
-function pickApp(btn, app) {
-  document.querySelectorAll('.app-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('upiId').placeholder = app + ' UPI ID';
-}
+// ✅ CLICK HANDLER
+document.querySelectorAll('.pay-opt').forEach(el => {
+  el.addEventListener('click', function () {
+    const method = this.id.replace('opt-', '');
+    selectMethod(method);
+  });
+});
 
-function verifyUPI() {
-  const val = document.getElementById('upiId').value.trim();
-  const btn = document.getElementById('upiVerifyBtn');
-  if (!val) { document.getElementById('upiId').focus(); return; }
-  btn.textContent = 'Checking…';
-  // In production: call your Flask endpoint to verify via Razorpay API
-  setTimeout(() => {
-    const ok = val.includes('@');
-    btn.textContent = ok ? '✓ Valid' : 'Invalid ID';
-    if (ok) btn.style.background = '#166534';
-    setTimeout(() => { btn.textContent='Verify'; btn.style.background='#1a1714'; }, 2200);
-  }, 700);
-}
-
-function placeOrder() {
+// ✅ PLACE ORDER (GLOBAL)
+window.placeOrder = function () {
   const btn = document.getElementById('placeOrderBtn');
 
-  // Validate address fields
-  const required = ['name','phone','addr1','city','pin','state'];
-  // (add validation here as needed)
-
   if (currentMethod === 'cod') {
-    // COD: submit form directly to Flask — no Razorpay needed
-    document.getElementById('upiIdInput').value = '';
+    document.getElementById('paymentMethod').value = 'cod';
     document.getElementById('checkoutForm').submit();
     return;
   }
 
-  // Online payment: open Razorpay
   btn.textContent = 'Opening payment…';
+
   const options = {
-    key:         RZ_KEY,
-    amount:      AMOUNT,
-    currency:    'INR',
-    name:        'ALGO',
+    key: RZ_KEY,
+    amount: AMOUNT,
+    currency: 'INR',
+    name: 'ALGO',
     description: 'Order #' + ORDER_ID,
-    order_id:    RZ_ORDER,
-    theme:       { color: '#c0392b' },
-    // Pre-select method tab in Razorpay popup
-    config: {
-      display: {
-        preferences: {
-          show_default_blocks: true
-        },
-        // Open on the right tab
-        sequence: currentMethod === 'upi'  ? ['block.upi','block.card','block.netbanking'] :
-                  currentMethod === 'card' ? ['block.card','block.upi','block.netbanking'] :
-                                             ['block.netbanking','block.upi','block.card']
-      }
-    },
+    order_id: RZ_ORDER,
+    theme: { color: '#c0392b' },
+
     handler: function(response) {
-      // Verify server-side
       fetch('/payment/verify', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({
-          razorpay_order_id:   response.razorpay_order_id,
+          razorpay_order_id: response.razorpay_order_id,
           razorpay_payment_id: response.razorpay_payment_id,
-          razorpay_signature:  response.razorpay_signature,
-          order_id:            ORDER_ID
+          razorpay_signature: response.razorpay_signature,
+          order_id: ORDER_ID
         })
       })
       .then(r => r.json())
       .then(d => {
-        if (d.success) window.location.href = '/order/success/' + d.order_id;
-        else alert('Payment verification failed. Contact support with order #' + ORDER_ID);
+        if (d.success) {
+          window.location.href = '/order/success/' + d.order_id;
+        } else {
+          alert('Payment verification failed');
+        }
       });
-    },
-    modal: { ondismiss: () => { btn.textContent = 'Place Order — ' + btnLabels[currentMethod]; } }
+    }
   };
+
   new Razorpay(options).open();
-}
+};
+
+// ✅ DEFAULT
+selectMethod('upi');
+
+});
 </script>
 {% endblock %}
