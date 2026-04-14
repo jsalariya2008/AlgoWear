@@ -60,7 +60,7 @@
           <a href="#" class="size-guide-link">Size Guide</a>
         </div>
         <div class="size-selector__options" id="sizeOptions">
-          {% for size in ['XS', 'S', 'M', 'L', 'XL', 'XXL'] %}
+          {% for size in ['M', 'L', 'XL'] %}
           <button class="size-btn {% if size == 'M' %}size-btn--active{% endif %}"
                   onclick="selectSize(this, '{{ size }}')" data-size="{{ size }}">{{ size }}</button>
           {% endfor %}
@@ -98,7 +98,7 @@
             Material & Care <span>+</span>
           </button>
           <div class="accordion__content">
-            <p>100% premium cotton. Machine wash cold. Do not tumble dry. Iron on low heat.</p>
+            <p>Premium terry cotton. Machine wash cold. Do not tumble dry. Iron on low heat.</p>
           </div>
         </div>
         <div class="accordion__item">
@@ -106,7 +106,7 @@
             Shipping & Returns <span>+</span>
           </button>
           <div class="accordion__content">
-            <p>Free shipping across India on orders above ₹999. Returns accepted within 7 days of delivery.</p>
+            <p>Free shipping across India on orders above ₹999.</p>
           </div>
         </div>
         <div class="accordion__item">

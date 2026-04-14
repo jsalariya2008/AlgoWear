@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Checkout - ALGO{% endblock %}
+{% block title %}Checkout — ALGO{% endblock %}
 
 {% block content %}
 <div style="padding:calc(70px + 50px) clamp(20px,5vw,60px) 80px; max-width:1200px; margin:0 auto;">
@@ -15,20 +15,42 @@
     <div>
 
       <!-- Delivery Address -->
-      <div style="margin-bottom:32px;">
-        <p style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(0,0,0,.35);margin-bottom:12px;">
-          Delivery Address
-        </p>
-        <input class="co-input" name="name"    placeholder="Full name"          type="text">
-        <input class="co-input" name="phone"   placeholder="Phone number"       type="tel">
-        <input class="co-input" name="addr1"   placeholder="Address line 1"     type="text">
-        <input class="co-input" name="addr2"   placeholder="Address line 2 (optional)" type="text">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <input class="co-input" name="city"  placeholder="City"     type="text">
-          <input class="co-input" name="pin"   placeholder="PIN code" type="text">
-        </div>
-        <input class="co-input" name="state"   placeholder="State"              type="text">
-      </div>
+<div style="margin-bottom:32px;">
+  <p style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(0,0,0,.35);margin-bottom:12px;">
+    Delivery Address <span style="color:#c0392b;">*</span>
+  </p>
+
+  <div class="field-wrap">
+    <label class="co-label">Full Name <span class="req">*</span></label>
+    <input class="co-input" id="field-name"  type="text"  placeholder="Jisha Sharma">
+  </div>
+  <div class="field-wrap">
+    <label class="co-label">Phone Number <span class="req">*</span></label>
+    <input class="co-input" id="field-phone" type="tel"   placeholder="9876543210" maxlength="10">
+  </div>
+  <div class="field-wrap">
+    <label class="co-label">Address Line 1 <span class="req">*</span></label>
+    <input class="co-input" id="field-addr1" type="text"  placeholder="House/Flat No., Street">
+  </div>
+  <div class="field-wrap">
+    <label class="co-label">Address Line 2</label>
+    <input class="co-input" id="field-addr2" type="text"  placeholder="Area, Landmark (optional)">
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <div class="field-wrap">
+      <label class="co-label">City <span class="req">*</span></label>
+      <input class="co-input" id="field-city"  type="text" placeholder="Raipur">
+    </div>
+    <div class="field-wrap">
+      <label class="co-label">PIN Code <span class="req">*</span></label>
+      <input class="co-input" id="field-pin"   type="text" placeholder="492001" maxlength="6">
+    </div>
+  </div>
+  <div class="field-wrap">
+    <label class="co-label">State <span class="req">*</span></label>
+    <input class="co-input" id="field-state" type="text"  placeholder="Chhattisgarh">
+  </div>
+</div>
 
       <!-- Payment Method -->
       <div>
@@ -37,7 +59,7 @@
         </p>
 
         <!-- UPI -->
-        <div class="pay-opt" id="opt-upi" ;>
+        <div class="pay-opt selected" id="opt-upi" onclick="selectMethod('upi')">
           <div class="pay-radio"><div class="pay-dot"></div></div>
           <div style="flex:1;">
             <div class="pay-name">UPI</div>
@@ -48,20 +70,20 @@
         <div class="pay-body open" id="body-upi">
           <div style="display:flex;gap:8px;margin-bottom:10px;">
             <input class="co-input" id="upiId" placeholder="yourname@upi" type="text" style="margin:0;flex:1;">
-            <button type="button" onclick="verifyUPI()" style="padding:0 16px;background:#1a1714;color:#f0e6d3;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;border:none;cursor:pointer;white-space:nowrap;" id="upiVerifyBtn">
+            <button onclick="verifyUPI()" style="padding:0 16px;background:#1a1714;color:#f0e6d3;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;border:none;cursor:pointer;white-space:nowrap;" id="upiVerifyBtn">
               Verify
             </button>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button class="app-btn" type="button" onclick="pickApp(this,'GPay')">GPay</button>
-            <button class="app-btn" type="button" onclick="pickApp(this,'PhonePe')">PhonePe</button>
-            <button class="app-btn" type="button" onclick="pickApp(this,'Paytm')">Paytm</button>
-            <button class="app-btn" type="button" onclick="pickApp(this,'BHIM')">BHIM</button>
+            <button class="app-btn" onclick="pickApp(this,'GPay')">GPay</button>
+            <button class="app-btn" onclick="pickApp(this,'PhonePe')">PhonePe</button>
+            <button class="app-btn" onclick="pickApp(this,'Paytm')">Paytm</button>
+            <button class="app-btn" onclick="pickApp(this,'BHIM')">BHIM</button>
           </div>
         </div>
 
         <!-- Card -->
-        <div class="pay-opt" id="opt-card">
+        <div class="pay-opt" id="opt-card" onclick="selectMethod('card')">
           <div class="pay-radio"><div class="pay-dot"></div></div>
           <div style="flex:1;">
             <div class="pay-name">Credit / Debit Card</div>
@@ -78,7 +100,8 @@
         </div>
 
         <!-- Net Banking -->
-        <div class="pay-opt" id="opt-nb">
+         <select class="co-input" id="field-bank" name="bank" style="cursor:pointer;"></select>
+        <div class="pay-opt" id="opt-nb" onclick="selectMethod('nb')">
           <div class="pay-radio"><div class="pay-dot"></div></div>
           <div style="flex:1;">
             <div class="pay-name">Net Banking</div>
@@ -99,7 +122,7 @@
         </div>
 
         <!-- COD -->
-        <div class="pay-opt" id="opt-cod">
+        <div class="pay-opt" id="opt-cod" onclick="selectMethod('cod')">
           <div class="pay-radio"><div class="pay-dot"></div></div>
           <div style="flex:1;">
             <div class="pay-name">Cash on Delivery</div>
@@ -111,10 +134,9 @@
             Pay in cash when delivered. Our partner will collect payment at your door.
           </p>
           <span style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;background:#fffbeb;color:#92400e;padding:4px 10px;">
-            + ₹50 COD handling fee
+            + ₹25 COD handling fee
           </span>
         </div>
-      
 
       </div>
     </div>
@@ -162,84 +184,71 @@
 
 <!-- Hidden form for actual submission -->
 <form id="checkoutForm" method="POST" action="{{ url_for('place_order') }}" style="display:none;">
-  <input type="hidden" name="payment_method" id="paymentMethod">
-  <input type="hidden" name="upi_id"         id="upiIdInput">
+  <input type="hidden" name="payment_method" id="paymentMethodInput" value="upi">
   <input type="hidden" name="rz_order_id"    value="{{ rz_order_id }}">
   <input type="hidden" name="order_id"       value="{{ order_id }}">
   <input type="hidden" name="amount"         value="{{ amount }}">
+  <!-- Address fields copied here by JS before submit -->
+  <input type="hidden" name="name"  id="input-name">
+  <input type="hidden" name="phone" id="input-phone">
+  <input type="hidden" name="addr1" id="input-addr1">
+  <input type="hidden" name="addr2" id="input-addr2">
+  <input type="hidden" name="city"  id="input-city">
+  <input type="hidden" name="pin"   id="input-pin">
+  <input type="hidden" name="state" id="input-state">
 </form>
 
 <!-- Razorpay SDK (needed for UPI, Card, Netbanking) -->
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <style>
-  .pay-opt {
-  display:flex;
-  align-items:center;
-  gap:14px;
-  padding:14px;
-  border:1px solid rgba(0,0,0,.1);
-  cursor:pointer;
-  margin-bottom:6px;
-}
+  .field-wrap  { margin-bottom: 8px; }
+.co-label    { display:block; font-family:'DM Mono',monospace; font-size:.6rem;
+               letter-spacing:.12em; text-transform:uppercase;
+               color:rgba(0,0,0,.4); margin-bottom:4px; }
+.req         { color:#c0392b; }
+.input-error { border-color:#c0392b !important; background:#fff8f7 !important; }
 
-.pay-opt.selected {
-  border-color:#c0392b;
-}
-
-.pay-radio {
-  width:18px;
-  height:18px;
-  border-radius:50%;
-  border:1.5px solid #999;
-}
-
-.pay-dot {
-  width:8px;
-  height:8px;
-  border-radius:50%;
-  background:#c0392b;
-  opacity:0;
-}
-
-.pay-opt.selected .pay-dot {
-  opacity:1;
-}
-
-.pay-body {
-  display:none;
-}
-
-.pay-body.open {
-  display:block;
-}
 .co-input {
   width:100%; padding:11px 14px; border:1px solid rgba(0,0,0,.1);
   background:#fdfaf6; font-family:'Crimson Pro',serif; font-size:.95rem;
   margin-bottom:8px; outline:none; box-sizing:border-box;
 }
 .co-input:focus { border-color:#c0392b; }
+.pay-opt {
+  display:flex; align-items:center; gap:14px; padding:14px 16px;
+  border:1px solid rgba(0,0,0,.1); background:#fdfaf6; cursor:pointer;
+  margin-bottom:6px; transition:border-color .2s;
+}
+.pay-opt:hover { border-color:rgba(0,0,0,.25); }
+.pay-opt.selected { border-color:#c0392b; background:#fff8f7; }
+.pay-radio {
+  width:18px; height:18px; border-radius:50%;
+  border:1.5px solid rgba(0,0,0,.2); display:flex;
+  align-items:center; justify-content:center; flex-shrink:0;
+}
+.pay-opt.selected .pay-radio { border-color:#c0392b; }
+.pay-dot { width:9px; height:9px; border-radius:50%; background:#c0392b; opacity:0; transition:opacity .15s; }
+.pay-opt.selected .pay-dot { opacity:1; }
+.pay-name { font-family:'DM Mono',monospace; font-size:.78rem; font-weight:500; color:#1a1714; }
+.pay-desc { font-size:.85rem; color:rgba(0,0,0,.42); margin-top:2px; }
+.pay-badge { font-family:'DM Mono',monospace; font-size:.58rem; letter-spacing:.1em; text-transform:uppercase; padding:3px 8px; background:#f0fdf4; color:#166534; }
+.pay-body { overflow:hidden; max-height:0; transition:max-height .35s ease, padding .3s; padding:0 16px; border:1px solid rgba(0,0,0,.07); border-top:none; background:#fff; margin-bottom:6px; margin-top:-6px; }
+.pay-body.open { max-height:200px; padding:16px; }
 .app-btn { padding:6px 12px; border:1px solid rgba(0,0,0,.1); font-family:'DM Mono',monospace; font-size:.62rem; letter-spacing:.08em; cursor:pointer; background:#fdfaf6; transition:all .2s; }
 .app-btn:hover, .app-btn.active { background:#1a1714; color:#f0e6d3; border-color:#1a1714; }
 </style>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-
 const RZ_KEY   = '{{ rz_key }}';
 const RZ_ORDER = '{{ rz_order_id }}';
 const AMOUNT   = {{ amount }};
 const ORDER_ID = {{ order_id }};
+const BASE     = {{ subtotal + (0 if subtotal >= 999 else 99) }};
 
 let currentMethod = 'upi';
-
-const btnLabels = {
-  upi: 'UPI',
-  card: 'Card',
-  nb: 'Net Banking',
-  cod: 'Cash on Delivery'
-};
-
+const methods = ['upi','card','nb','cod'];
+const btnLabels = { upi:'UPI', card:'Card', nb:'Net Banking', cod:'Cash on Delivery' };
 const btnNotes  = {
   upi:  'UPI payment processed via Razorpay',
   card: 'Card charged securely via Razorpay',
@@ -247,91 +256,180 @@ const btnNotes  = {
   cod:  'Pay cash when your order arrives'
 };
 
-// ✅ SELECT METHOD
 function selectMethod(m) {
   currentMethod = m;
-
-  document.querySelectorAll('.pay-opt').forEach(el => {
-    el.classList.remove('selected');
+  methods.forEach(id => {
+    document.getElementById('opt-'+id).classList.toggle('selected', id===m);
+    document.getElementById('body-'+id).classList.toggle('open', id===m);
   });
-
-  document.querySelectorAll('.pay-body').forEach(el => {
-    el.classList.remove('open');
-  });
-
-  const opt = document.getElementById('opt-' + m);
-  const body = document.getElementById('body-' + m);
-
-  if (opt) opt.classList.add('selected');
-  if (body) body.classList.add('open');
-
-  const hidden = document.getElementById('paymentMethod');
-  if (hidden) hidden.value = m;
-
-  const btn = document.getElementById('placeOrderBtn');
-  if (btn) btn.textContent = 'Place Order — ' + btnLabels[m];
-
-  const note = document.getElementById('methodNote');
-  if (note) note.textContent = btnNotes[m];
+  document.getElementById('placeOrderBtn').textContent = 'Place Order — ' + btnLabels[m];
+  document.getElementById('methodNote').textContent    = btnNotes[m];
+  document.getElementById('paymentMethodInput').value  = m;
+  // COD fee toggle
+  const codRow = document.getElementById('codFeeRow');
+  codRow.style.display = m==='cod' ? 'flex' : 'none';
+  document.getElementById('totalDisplay').textContent =
+    '₹' + (m==='cod' ? BASE+25 : BASE).toLocaleString('en-IN');
 }
 
-// ✅ CLICK HANDLER
-document.querySelectorAll('.pay-opt').forEach(el => {
-  el.addEventListener('click', function () {
-    const method = this.id.replace('opt-', '');
-    selectMethod(method);
-  });
-});
+function pickApp(btn, app) {
+  document.querySelectorAll('.app-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('upiId').placeholder = app + ' UPI ID';
+}
 
-// ✅ PLACE ORDER (GLOBAL)
-window.placeOrder = function () {
-  const btn = document.getElementById('placeOrderBtn');
+function verifyUPI() {
+  const val = document.getElementById('upiId').value.trim();
+  const btn = document.getElementById('upiVerifyBtn');
+  if (!val) { document.getElementById('upiId').focus(); return; }
+  btn.textContent = 'Checking…';
+  // In production: call your Flask endpoint to verify via Razorpay API
+  setTimeout(() => {
+    const ok = val.includes('@');
+    btn.textContent = ok ? '✓ Valid' : 'Invalid ID';
+    if (ok) btn.style.background = '#166534';
+    setTimeout(() => { btn.textContent='Verify'; btn.style.background='#1a1714'; }, 2200);
+  }, 700);
+}
 
-  if (currentMethod === 'cod') {
-    document.getElementById('paymentMethod').value = 'cod';
-    document.getElementById('checkoutForm').submit();
-    return;
-  }
+function placeOrder() {
+    // ── Validate all address fields ──
+    const fields = [
+        { id: 'field-name',   label: 'Full name' },
+        { id: 'field-phone',  label: 'Phone number' },
+        { id: 'field-addr1',  label: 'Address line 1' },
+        { id: 'field-city',   label: 'City' },
+        { id: 'field-pin',    label: 'PIN code' },
+        { id: 'field-state',  label: 'State' },
+    ];
 
-  btn.textContent = 'Opening payment…';
+    let firstError = null;
 
-  const options = {
-    key: RZ_KEY,
-    amount: AMOUNT,
-    currency: 'INR',
-    name: 'ALGO',
-    description: 'Order #' + ORDER_ID,
-    order_id: RZ_ORDER,
-    theme: { color: '#c0392b' },
-
-    handler: function(response) {
-      fetch('/payment/verify', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({
-          razorpay_order_id: response.razorpay_order_id,
-          razorpay_payment_id: response.razorpay_payment_id,
-          razorpay_signature: response.razorpay_signature,
-          order_id: ORDER_ID
-        })
-      })
-      .then(r => r.json())
-      .then(d => {
-        if (d.success) {
-          window.location.href = '/order/success/' + d.order_id;
+    fields.forEach(f => {
+        const el = document.getElementById(f.id);
+        if (!el.value.trim()) {
+            el.classList.add('input-error');
+            if (!firstError) firstError = el;
         } else {
-          alert('Payment verification failed');
+            el.classList.remove('input-error');
         }
-      });
+    });
+
+    // Phone validation — must be 10 digits
+    const phone = document.getElementById('field-phone');
+    if (phone.value.trim() && !/^[6-9]\d{9}$/.test(phone.value.trim())) {
+        phone.classList.add('input-error');
+        showFieldError(phone, 'Enter a valid 10-digit Indian mobile number');
+        if (!firstError) firstError = phone;
     }
-  };
 
-  new Razorpay(options).open();
-};
+    // PIN validation — must be 6 digits
+    const pin = document.getElementById('field-pin');
+    if (pin.value.trim() && !/^\d{6}$/.test(pin.value.trim())) {
+        pin.classList.add('input-error');
+        showFieldError(pin, 'PIN code must be 6 digits');
+        if (!firstError) firstError = pin;
+    }
 
-// ✅ DEFAULT
-selectMethod('upi');
+    // UPI validation — if UPI selected, ID must be filled
+    if (currentMethod === 'upi') {
+        const upiId = document.getElementById('upiId');
+        if (!upiId.value.trim() || !upiId.value.includes('@')) {
+            upiId.classList.add('input-error');
+            showFieldError(upiId, 'Enter a valid UPI ID (e.g. name@upi)');
+            if (!firstError) firstError = upiId;
+        }
+    }
 
+    // Net banking — bank must be selected
+    if (currentMethod === 'nb') {
+        const bank = document.getElementById('field-bank');
+        if (!bank.value) {
+            bank.classList.add('input-error');
+            if (!firstError) firstError = bank;
+        }
+    }
+
+    if (firstError) {
+        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstError.focus();
+        return; // stop here — don't proceed
+    }
+
+    // ── All valid — copy values to hidden form ──
+    document.getElementById('input-name').value  = document.getElementById('field-name').value.trim();
+    document.getElementById('input-phone').value = document.getElementById('field-phone').value.trim();
+    document.getElementById('input-addr1').value = document.getElementById('field-addr1').value.trim();
+    document.getElementById('input-addr2').value = document.getElementById('field-addr2').value.trim();
+    document.getElementById('input-city').value  = document.getElementById('field-city').value.trim();
+    document.getElementById('input-pin').value   = document.getElementById('field-pin').value.trim();
+    document.getElementById('input-state').value = document.getElementById('field-state').value.trim();
+
+    const btn = document.getElementById('placeOrderBtn');
+
+    if (currentMethod === 'cod') {
+        btn.textContent = 'Placing Order...';
+        btn.disabled = true;
+        document.getElementById('checkoutForm').submit();
+        return;
+    }
+
+    btn.textContent = 'Opening payment...';
+    const options = {
+        key:         RZ_KEY,
+        amount:      AMOUNT,
+        currency:    'INR',
+        name:        'ALGO',
+        description: 'Order #' + ORDER_ID,
+        order_id:    RZ_ORDER,
+        theme:       { color: '#c0392b' },
+        handler: function(response) {
+            fetch('/payment/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    razorpay_order_id:   response.razorpay_order_id,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_signature:  response.razorpay_signature,
+                    order_id:            ORDER_ID
+                })
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.success) window.location.href = '/order/success/' + d.order_id;
+                else alert('Payment verification failed. Contact support with order #' + ORDER_ID);
+            });
+        },
+        modal: {
+            ondismiss: function() {
+                btn.textContent = 'Place Order — ' + btnLabels[currentMethod];
+                btn.disabled = false;
+            }
+        }
+    };
+    new Razorpay(options).open();
+}
+
+function showFieldError(el, msg) {
+    // Remove any existing error message for this field
+    const existing = el.parentElement.querySelector('.field-error-msg');
+    if (existing) existing.remove();
+    const err = document.createElement('p');
+    err.className = 'field-error-msg';
+    err.textContent = msg;
+    err.style.cssText = 'color:#c0392b;font-family:"DM Mono",monospace;font-size:.6rem;letter-spacing:.08em;margin:2px 0 0;';
+    el.parentElement.insertBefore(err, el.nextSibling);
+}
+
+// Clear error styling as user types
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.co-input').forEach(input => {
+        input.addEventListener('input', function() {
+            this.classList.remove('input-error');
+            const errMsg = this.parentElement.querySelector('.field-error-msg');
+            if (errMsg) errMsg.remove();
+        });
+    });
 });
 </script>
 {% endblock %}
